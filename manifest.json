@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "action": { "default_popup": "index.html" },
   "background": {
-    "service_worker": "src/background.ts",
+    "service_worker": "src/app/manifest/background.ts",
     "type": "module"
   }
 }

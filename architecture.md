@@ -1,9 +1,9 @@
 # Intended architecture for the project
 
 src/
-app/
-manifest/
-config/
+    app/
+        manifest/
+        config/
 
     runtimes/
         background/
