@@ -1,0 +1,15 @@
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-bg-primary);
+  animation: fadeIn 300ms ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Page transitions could go here */
