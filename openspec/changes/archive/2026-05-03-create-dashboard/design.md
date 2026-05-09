@@ -1,6 +1,6 @@
 ## Context
 
-Follow-Up es una Chrome extension (Manifest V3) que permite guardar contactos de redes sociales con recordatorios de seguimiento. Actualmente el popup muestra la plantilla default de Vite+React. Reemplazaremos esta vista con el Dashboard principal, aplicando estrictamente el sistema de diseño **Bento Minimalist** y la arquitectura de carpetas definida en `agents.md`. La extensión opera sin backend (V1) usando `chrome.storage.local`. El popup tiene una dimensión fija de **400×600px**.
+Follow-Up es una Chrome extension (Manifest V3) que permite guardar contactos de redes sociales con recordatorios de seguimiento. Actualmente el popup muestra la plantilla default de Vite+React. Reemplazaremos esta vista con el Dashboard principal, aplicando estrictamente el sistema de diseño **Bento Minimalist** y la arquitectura de carpetas definida en `architecture.md` y `agents.md`. La extensión opera sin backend (V1) usando `chrome.storage.local` detrás de wrappers compartidos. El popup tiene una dimensión fija de **400×600px**.
 
 ## Goals / Non-Goals
 
@@ -8,7 +8,7 @@ Follow-Up es una Chrome extension (Manifest V3) que permite guardar contactos de
 - Construir el dashboard funcional con header, stats y lista de contactos.
 - Aplicar el sistema de diseño bento (rejilla asimétrica, bordes sutiles, micro-animaciones).
 - Implementar tarjetas colapsables con menú de acciones y alertas de caducidad.
-- Consumir datos de `chrome.storage.local` mediante el hook `useDashboard`.
+- Consumir follow-ups mediante el boundary de `src/features/follow-ups/`, dejando `chrome.storage.local` encapsulado en infraestructura/repositorios y wrappers de `src/shared/chrome/`.
 - Soporte nativo para **Dark Mode** usando los tokens de color oficiales.
 
 **Non-Goals:**
@@ -18,12 +18,15 @@ Follow-Up es una Chrome extension (Manifest V3) que permite guardar contactos de
 
 ## Decisions
 
-### 1. Arquitectura de Componentes — Feature-based
+### 1. Arquitectura de Componentes — Runtime + Features
 
-**Decisión:** Los componentes de UI del popup vivirán en `src/runtimes/popup/` para mantener la separación de entornos de ejecución de la extensión.
-- **Pages**: `src/runtimes/popup/pages/Dashboard.jsx`
-- **Components**: `src/runtimes/popup/components/`
-- **Styles**: Uso de CSS Modules o Vanilla CSS referenciando tokens globales.
+**Decisión:** El dashboard vive como experiencia de runtime en `src/runtimes/popup/`, pero no debe concentrar reglas de negocio ni acceso directo a Chrome APIs.
+- **Runtime page**: `src/runtimes/popup/pages/Dashboard.jsx` compone la pantalla y maneja navegación local del popup.
+- **Runtime components**: `src/runtimes/popup/components/` contiene piezas específicas del shell del popup, como header y tarjetas de métricas.
+- **Feature UI**: `src/features/follow-ups/ui/follow-up-list.tsx` y componentes relacionados renderizan la lista de seguimientos cuando la UI sea promovida al boundary de feature.
+- **Application layer**: `src/features/follow-ups/application/list-follow-ups.ts` calcula la lista consumida por el dashboard.
+- **Infrastructure**: `src/features/follow-ups/infrastructure/follow-up.repository.ts` encapsula lectura desde storage local.
+- **Shared**: `src/shared/chrome/storage.ts`, `src/shared/types/messages.ts` y `src/shared/utils/date.ts` centralizan wrappers, contratos y utilidades reutilizables.
 
 ### 2. Sistema de Rejilla — Bento Grid Layout
 
@@ -50,9 +53,11 @@ Follow-Up es una Chrome extension (Manifest V3) que permite guardar contactos de
 
 ### 5. Estructura de Datos y Modelado
 
-**Decisión:** El hook `useDashboard()` retornará objetos que cumplan con el modelo `Contact` definido en `project.md`:
+**Decisión:** Los objetos que consume el dashboard deben alinearse con el modelo de follow-up definido en `src/features/follow-ups/domain/follow-up.types.ts`:
 - `platform`: Determinará el icono (LinkedIn/Instagram).
 - `expirationDate`: Activará la alerta visual si `Date.now() - expirationDate` es menor a 7 días.
+
+El runtime puede conservar un hook adaptador como `useDashboard()` para estado de carga y errores, pero ese hook debe delegar el listado a la capa de aplicación del feature, no definir mocks ni leer `chrome.storage.local` directamente.
 
 ## Risks / Trade-offs
 
@@ -69,4 +74,10 @@ Follow-Up es una Chrome extension (Manifest V3) que permite guardar contactos de
 | `src/runtimes/popup/components/DashboardHeader.jsx` | Header con `var(--color-bg-secondary)`. |
 | `src/runtimes/popup/components/StatsCards.jsx` | Grid de métricas. |
 | `src/runtimes/popup/components/ContactCard.jsx` | Tarjeta colapsable `.bento-card--wide`. |
-| `src/runtimes/popup/hooks/useDashboard.js` | Lógica de filtrado y estados. |
+| `src/runtimes/popup/hooks/useDashboard.js` | Adaptador de estado del dashboard que delega a `features/follow-ups`. |
+| `src/features/follow-ups/domain/follow-up.types.ts` | Contrato de datos del follow-up usado por dashboard y formulario. |
+| `src/features/follow-ups/application/list-follow-ups.ts` | Caso de uso para listar follow-ups y calcular datos de presentación. |
+| `src/features/follow-ups/infrastructure/follow-up.repository.ts` | Persistencia local vía wrappers compartidos de Chrome storage. |
+| `src/features/follow-ups/ui/follow-up-list.tsx` | UI reutilizable de lista cuando se extraiga del runtime popup. |
+| `src/shared/chrome/storage.ts` | Wrapper de `chrome.storage.local`. |
+| `src/shared/utils/date.ts` | Formato de fechas y cálculo de días restantes. |

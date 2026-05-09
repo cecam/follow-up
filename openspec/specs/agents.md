@@ -104,79 +104,71 @@
 
 ```
 src/
-  app/
-    manifest/              # Chrome manifest-related config (background.ts)
-    config/                # Environment variables, Stripe keys
+    app/
+        manifest/
+        config/
 
-  runtimes/
-    background/            # Service worker (alarms, messaging, payment detection)
-      index.ts
-      message-router.ts
-      alarm-router.ts
-    content/               # Content scripts for social profile detection
-      index.ts
-      linkedin-detector.ts
-      instagram-detector.ts
-    popup/                 # React popup UI
-      main.tsx
-      App.tsx
-      pages/
-      components/
+    runtimes/
+        background/
+            index.ts
+            message-router.ts
+            alarm-router.ts
+        content/
+            index.ts
+            linkedin-detector.ts
+            instagram-detector.ts
+            x-detector.ts
+        popup/
+            main.tsx
+            App.tsx
+            pages/
+            components/
 
-  features/
-    auth/                  # Local authentication (V1)
-      domain/
-        auth.types.ts
-      application/
-        sign-in.ts
-        sign-up.ts
-        sign-out.ts
-        get-session.ts
-      infrastructure/
-        local-auth-service.ts    # Hashing, token gen, session mgmt
-        auth-storage.ts          # chrome.storage.local wrapper
-      ui/
-        auth-provider.tsx
-        login-form.tsx
-        auth-guard.tsx
+    features/
+        follow-ups/
+            domain/
+                follow-up.ts
+                follow-up.types.ts
+                follow-up.validators.ts
+            application/
+                create-follow-up.ts
+                complete-follow-up.ts
+                delete-follow-up.ts
+                list-follow-ups.ts
+            infrastructure/
+                follow-up.repository.ts
+            ui/
+                follow-up-form.tsx
+                follow-up-list.tsx
 
-    billing/               # Stripe Lifetime purchase
-      domain/
-        plan.types.ts
-      application/
-        create-checkout.ts
-        check-entitlements.ts
-      infrastructure/
-        stripeCheckout.ts       # Abre Stripe Checkout en nueva tab
-        planStorage.ts          # Lee/escribe plan en chrome.storage
-      ui/
-        pricingCard.tsx
-        upgradePrompt.tsx
+        profiles/
+            domain/
+                profile.ts
+                profile.types.ts
+            application/
+                detect-current-profile.ts
+            infrastructure/
+                profile-detectors.ts
 
-    follow-ups/            # Core follow-up tracking
-      domain/
-      application/
-      infrastructure/
-      ui/
+        reminders/
+            application/
+                schedule-follow-up-reminder.ts
+                handle-reminder-trigger.ts
+            infrastructure/
+                reminder.service.ts
 
-    profiles/              # Social profile detection
-      domain/
-      application/
-      infrastructure/
-
-    reminders/             # Reminder scheduling
-      application/
-      infrastructure/
-
-  common/
-    chrome/                # Chrome API wrappers
-    types/
-    utils/
-    ui/                    # Shared bento grid components
-      followUpList.tsx
-      followUpCard.tsx
-      button.tsx
-      input.tsx
+    shared/
+        chrome/
+            messaging.ts
+            storage.ts
+            notifications.ts
+            alarms.ts
+        types/
+            messages.ts
+            runtime.ts
+        utils/
+            date.ts
+            id.ts
 ```
 
 ---
