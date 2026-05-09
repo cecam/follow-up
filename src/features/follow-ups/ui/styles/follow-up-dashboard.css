@@ -1,0 +1,20 @@
+.follow-up-dashboard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-bg-primary);
+  animation: follow-up-dashboard-fade-in 300ms ease-in;
+}
+
+@keyframes follow-up-dashboard-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
