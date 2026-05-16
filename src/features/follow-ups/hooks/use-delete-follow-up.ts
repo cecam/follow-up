@@ -25,7 +25,7 @@ export const useDeleteFollowUp = (): UseDeleteFollowUpResult => {
     try {
       const response = await deleteFollowUpService(id);
 
-      if (!response.ok) {
+      if (response.ok === false) {
         throw new Error(response.error);
       }
 

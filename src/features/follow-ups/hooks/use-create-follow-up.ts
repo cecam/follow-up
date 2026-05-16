@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { createFollowUp as createFollowUpService } from '../application/follow-up.service';
+import { FOLLOW_UP_ACTIVE_LIMIT_ERROR, FOLLOW_UP_ACTIVE_LIMIT_MESSAGE } from '../domain/follow-up.constants';
 import type { FollowUp, FollowUpInput } from '../domain/follow-up';
 
 type CreateFollowUpResult = {
@@ -26,8 +27,8 @@ export const useCreateFollowUp = (): UseCreateFollowUpResult => {
     try {
       const response = await createFollowUpService(input);
 
-      if (!response.ok) {
-        throw new Error(response.error);
+      if (response.ok === false) {
+        throw new Error(response.error === FOLLOW_UP_ACTIVE_LIMIT_ERROR ? FOLLOW_UP_ACTIVE_LIMIT_MESSAGE : response.error);
       }
 
       if (!Array.isArray(response.contacts) || !response.followUp) {

@@ -26,7 +26,7 @@ export const useUpdateFollowUp = (): UseUpdateFollowUpResult => {
     try {
       const response = await updateFollowUpService(input);
 
-      if (!response.ok) {
+      if (response.ok === false) {
         throw new Error(response.error);
       }
 
