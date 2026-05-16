@@ -1,5 +1,6 @@
 import type { FollowUp, FollowUpInput } from '../domain/follow-up';
-import { validateFollowUpInput } from '../domain/follow-up.validators';
+import { hasReachedActiveFollowUpLimit, validateFollowUpInput } from '../domain/follow-up.validators';
+import { FOLLOW_UP_ACTIVE_LIMIT_ERROR } from '../domain/follow-up.constants';
 import { fail, ok } from '../../../shared/types/runtime';
 import { normalizeFollowUp } from '../infrastructure/follow-up.adapters';
 import {
@@ -23,6 +24,12 @@ export const createFollowUp = async (input: FollowUpInput) => {
   const followUp = normalizeFollowUp(input);
 
   try {
+    const currentFollowUps = await getAllFollowUpsRepository();
+
+    if (hasReachedActiveFollowUpLimit(currentFollowUps.map(normalizeFollowUp))) {
+      return fail(FOLLOW_UP_ACTIVE_LIMIT_ERROR);
+    }
+
     const contacts = await createFollowUpRepository(followUp);
     return ok({ contacts, followUp });
   } catch (error) {
