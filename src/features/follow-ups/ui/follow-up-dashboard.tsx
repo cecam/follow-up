@@ -1,7 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { AlertCircle } from 'lucide-react';
 import { useFollowUp } from '../hooks/use-follow-up';
 import { isExpiringWithinDays } from '../../../shared/utils/date';
 import type { FollowUp } from '../domain/follow-up';
+import { FOLLOW_UP_ACTIVE_LIMIT_MESSAGE } from '../domain/follow-up.constants';
+import { hasReachedActiveFollowUpLimit } from '../domain/follow-up.validators';
 import { FollowUpDashboardHeader } from './follow-up-dashboardheader';
 import { FollowUpStats } from './follow-up-stats';
 import { FollowUpList } from './follow-up-list';
@@ -9,7 +12,7 @@ import './styles/follow-up-dashboard.css';
 
 export type FollowUpDashboardProps = {
   contactsOverride?: FollowUp[] | null;
-  onAddFollowUp: () => void;
+  onAddFollowUp: (followUps?: FollowUp[]) => void;
   onEditFollowUp: (followUp: FollowUp) => void;
   onFollowUpsChange: (followUps: FollowUp[]) => void;
 };
@@ -24,6 +27,12 @@ export const FollowUpDashboard = ({
 }: FollowUpDashboardProps) => {
   const { data, isLoading, errors, refetch } = useFollowUp(contactsOverride);
 
+  useEffect(() => {
+    if (!isLoading) {
+      onFollowUpsChange(data);
+    }
+  }, [data, isLoading, onFollowUpsChange]);
+
   const stats = useMemo(() => {
     const expiringSoon = data.filter((followUp) => isExpiringWithinDays(followUp.expirationDate, 7)).length;
 
@@ -32,6 +41,8 @@ export const FollowUpDashboard = ({
       expiringSoon,
     };
   }, [data]);
+
+  const activeLimitReached = useMemo(() => hasReachedActiveFollowUpLimit(data), [data]);
 
   if (errors) {
     return (
@@ -44,8 +55,14 @@ export const FollowUpDashboard = ({
 
   return (
     <div className="follow-up-dashboard">
-      <FollowUpDashboardHeader username={USERNAME} onAddFollowUp={onAddFollowUp} />
+      <FollowUpDashboardHeader username={USERNAME} onAddFollowUp={() => onAddFollowUp(data)} />
       <FollowUpStats stats={stats} />
+      {activeLimitReached && (
+        <div className="follow-up-limit-alert" role="alert">
+          <AlertCircle size={16} />
+          <span>{FOLLOW_UP_ACTIVE_LIMIT_MESSAGE}</span>
+        </div>
+      )}
       <FollowUpList
         contacts={data}
         loading={isLoading}

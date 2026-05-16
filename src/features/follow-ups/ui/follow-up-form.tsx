@@ -3,8 +3,13 @@ import { ArrowLeft, AlertCircle, Save } from 'lucide-react';
 import { useCreateFollowUp } from '../hooks/use-create-follow-up';
 import { useUpdateFollowUp } from '../hooks/use-update-follow-up';
 import type { FollowUp, FollowUpInput, FollowUpValidationErrors } from '../domain/follow-up';
-import { FOLLOW_UP_NOTE_MAX_LENGTH, FOLLOW_UP_PLATFORMS, FOLLOW_UP_STATUSES } from '../domain/follow-up.constants';
-import { validateFollowUpInput } from '../domain/follow-up.validators';
+import {
+  FOLLOW_UP_ACTIVE_LIMIT_MESSAGE,
+  FOLLOW_UP_NOTE_MAX_LENGTH,
+  FOLLOW_UP_PLATFORMS,
+  FOLLOW_UP_STATUSES,
+} from '../domain/follow-up.constants';
+import { hasReachedActiveFollowUpLimit, validateFollowUpInput } from '../domain/follow-up.validators';
 import { fromDateInputValue, getExpirationDate, toDateInputValue } from '../../../shared/utils/date';
 import { createId } from '../../../shared/utils/id';
 import './styles/follow-up-form.css';
@@ -19,6 +24,7 @@ type FollowUpFormValues = {
 
 export type FollowUpFormProps = {
   followUp?: FollowUp | null;
+  followUps?: FollowUp[] | null;
   onBack: () => void;
   onSaveSuccess: (followUps: FollowUp[]) => void;
 };
@@ -36,7 +42,7 @@ const createInitialValues = (followUp?: FollowUp | null): FollowUpFormValues => 
   };
 };
 
-export const FollowUpForm = ({ followUp, onBack, onSaveSuccess }: FollowUpFormProps) => {
+export const FollowUpForm = ({ followUp, followUps, onBack, onSaveSuccess }: FollowUpFormProps) => {
   const [values, setValues] = useState<FollowUpFormValues>(() => createInitialValues(followUp));
   const [errors, setErrors] = useState<FollowUpValidationErrors>({});
   const {
@@ -53,6 +59,8 @@ export const FollowUpForm = ({ followUp, onBack, onSaveSuccess }: FollowUpFormPr
   const isEditMode = Boolean(followUp?.id);
   const submitError = isEditMode ? updateFollowUpError?.message : createFollowUpError?.message;
   const isSubmitting = isSaving || isUpdating;
+  const activeLimitReached = !isEditMode && hasReachedActiveFollowUpLimit(followUps ?? []);
+  const createButtonDisabled = isSubmitting || activeLimitReached;
 
   const automaticExpirationDate = useMemo(() => {
     return toDateInputValue(getExpirationDate(values.createdAt));
@@ -97,6 +105,10 @@ export const FollowUpForm = ({ followUp, onBack, onSaveSuccess }: FollowUpFormPr
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (activeLimitReached) {
+      return;
+    }
+
     if (!validate()) {
       return;
     }
@@ -133,6 +145,13 @@ export const FollowUpForm = ({ followUp, onBack, onSaveSuccess }: FollowUpFormPr
           <div className="follow-up-alert" role="alert">
             <AlertCircle size={16} />
             <span>{submitError}</span>
+          </div>
+        )}
+
+        {activeLimitReached && (
+          <div className="follow-up-alert" role="alert">
+            <AlertCircle size={16} />
+            <span>{FOLLOW_UP_ACTIVE_LIMIT_MESSAGE}</span>
           </div>
         )}
 
@@ -180,9 +199,9 @@ export const FollowUpForm = ({ followUp, onBack, onSaveSuccess }: FollowUpFormPr
           Tienes hasta {automaticExpirationDate} para que expire tu follow-up
         </p>
 
-        <button className="follow-up-save-button" type="submit" disabled={isSubmitting}>
+        <button className="follow-up-save-button" type="submit" disabled={createButtonDisabled}>
           <Save size={16} />
-          <span>{isSubmitting ? 'Guardando...' : 'Guardar'}</span>
+          <span>{isSubmitting ? 'Guardando...' : isEditMode ? 'Guardar' : 'Crear'}</span>
         </button>
       </form>
     </div>

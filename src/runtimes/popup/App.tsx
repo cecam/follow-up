@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Dashboard } from './pages/Dashboard';
 import { FollowUpForm } from './pages/FollowUpForm';
 import type { FollowUp } from '../../features/follow-ups/domain/follow-up';
@@ -11,35 +11,40 @@ function App() {
   const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUp | null>(null);
   const [dashboardContacts, setDashboardContacts] = useState<FollowUp[] | null>(null);
 
-  const handleCreateFollowUp = () => {
+  const handleCreateFollowUp = useCallback((contacts?: FollowUp[]) => {
+    if (contacts) {
+      setDashboardContacts(contacts);
+    }
+
     setSelectedFollowUp(null);
     setCurrentView('form');
-  };
+  }, []);
 
-  const handleEditFollowUp = (followUp: FollowUp) => {
+  const handleEditFollowUp = useCallback((followUp: FollowUp) => {
     setSelectedFollowUp(followUp);
     setCurrentView('form');
-  };
+  }, []);
 
-  const handleReturnToDashboard = () => {
+  const handleReturnToDashboard = useCallback(() => {
     setSelectedFollowUp(null);
     setCurrentView('dashboard');
-  };
+  }, []);
 
-  const handleSaveSuccess = (contacts: FollowUp[]) => {
+  const handleSaveSuccess = useCallback((contacts: FollowUp[]) => {
     setDashboardContacts(contacts);
     handleReturnToDashboard();
-  };
+  }, [handleReturnToDashboard]);
 
-  const handleFollowUpsChange = (contacts: FollowUp[]) => {
+  const handleFollowUpsChange = useCallback((contacts: FollowUp[]) => {
     setDashboardContacts(contacts);
-  };
+  }, []);
 
   return (
     <div className="app-shell" data-theme="light">
       {currentView === 'form' ? (
         <FollowUpForm
           followUp={selectedFollowUp}
+          followUps={dashboardContacts}
           onBack={handleReturnToDashboard}
           onSaveSuccess={handleSaveSuccess}
         />
