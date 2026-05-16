@@ -1,5 +1,10 @@
-import type { FollowUpInput, FollowUpValidationErrors } from './follow-up';
-import { FOLLOW_UP_NOTE_MAX_LENGTH, FOLLOW_UP_PLATFORMS, FOLLOW_UP_STATUSES } from './follow-up.constants';
+import type { FollowUp, FollowUpInput, FollowUpValidationErrors } from './follow-up';
+import {
+  FOLLOW_UP_ACTIVE_LIMIT,
+  FOLLOW_UP_NOTE_MAX_LENGTH,
+  FOLLOW_UP_PLATFORMS,
+  FOLLOW_UP_STATUSES,
+} from './follow-up.constants';
 
 export const isValidUrl = (value: string) => {
   try {
@@ -39,4 +44,20 @@ export const validateFollowUpInput = (input?: FollowUpInput) => {
     valid: Object.keys(errors).length === 0,
     errors,
   };
+};
+
+export const isActiveFollowUp = (followUp: FollowUp, now: Date = new Date()): boolean => {
+  const expiresAt = new Date(followUp.expirationDate).getTime();
+
+  if (Number.isNaN(expiresAt)) return false;
+
+  return followUp.status === FOLLOW_UP_STATUSES.PENDING && expiresAt >= now.getTime();
+};
+
+export const getActiveFollowUpCount = (followUps: FollowUp[], now: Date = new Date()): number => {
+  return followUps.filter((followUp) => isActiveFollowUp(followUp, now)).length;
+};
+
+export const hasReachedActiveFollowUpLimit = (followUps: FollowUp[], now: Date = new Date()): boolean => {
+  return getActiveFollowUpCount(followUps, now) >= FOLLOW_UP_ACTIVE_LIMIT;
 };
