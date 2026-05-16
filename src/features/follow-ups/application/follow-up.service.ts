@@ -1,5 +1,9 @@
 import type { FollowUp, FollowUpInput } from '../domain/follow-up';
-import { hasReachedActiveFollowUpLimit, validateFollowUpInput } from '../domain/follow-up.validators';
+import {
+  hasReachedActiveFollowUpLimit,
+  isExpiredFollowUp,
+  validateFollowUpInput,
+} from '../domain/follow-up.validators';
 import { FOLLOW_UP_ACTIVE_LIMIT_ERROR } from '../domain/follow-up.constants';
 import { fail, ok } from '../../../shared/types/runtime';
 import { normalizeFollowUp } from '../infrastructure/follow-up.adapters';
@@ -7,11 +11,33 @@ import {
   createFollowUpRepository,
   deleteFollowUpRepository,
   getAllFollowUpsRepository,
+  updateStorage,
   updateFollowUpRepository,
 } from '../infrastructure/follow-up.repository';
 
-export const getAllFollowUps = async (): Promise<FollowUp[]> => {
-  return (await getAllFollowUpsRepository()).map(normalizeFollowUp);
+export type GetAllFollowUpsResult = {
+  contacts: FollowUp[];
+  expiredFollowUpsRemoved: string[];
+};
+
+export const getAllFollowUps = async (now: Date = new Date()): Promise<GetAllFollowUpsResult> => {
+  const followUps = (await getAllFollowUpsRepository()).map(normalizeFollowUp);
+  const expiredFollowUps = followUps.filter((followUp) => isExpiredFollowUp(followUp, now));
+
+  if (expiredFollowUps.length === 0) {
+    return {
+      contacts: followUps,
+      expiredFollowUpsRemoved: [],
+    };
+  }
+
+  const contacts = followUps.filter((followUp) => !isExpiredFollowUp(followUp, now));
+  await updateStorage(contacts);
+
+  return {
+    contacts,
+    expiredFollowUpsRemoved: expiredFollowUps.map((followUp) => followUp.name),
+  };
 };
 
 export const createFollowUp = async (input: FollowUpInput) => {

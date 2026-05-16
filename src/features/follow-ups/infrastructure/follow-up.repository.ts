@@ -6,7 +6,7 @@ type FollowUpsStorage = {
   [FOLLOW_UPS_STORAGE_KEY]: FollowUp[];
 };
 
-const updateStorage = async (followUps: FollowUp[]): Promise<FollowUp[]> => {
+export const updateStorage = async (followUps: FollowUp[]): Promise<FollowUp[]> => {
   await setLocalStorage<FollowUpsStorage>({ [FOLLOW_UPS_STORAGE_KEY]: followUps });
   return followUps;
 };

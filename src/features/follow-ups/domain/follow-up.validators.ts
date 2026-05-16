@@ -54,6 +54,14 @@ export const isActiveFollowUp = (followUp: FollowUp, now: Date = new Date()): bo
   return followUp.status === FOLLOW_UP_STATUSES.PENDING && expiresAt >= now.getTime();
 };
 
+export const isExpiredFollowUp = (followUp: FollowUp, now: Date = new Date()): boolean => {
+  const expiresAt = new Date(followUp.expirationDate).getTime();
+
+  if (Number.isNaN(expiresAt)) return false;
+
+  return expiresAt < now.getTime();
+};
+
 export const getActiveFollowUpCount = (followUps: FollowUp[], now: Date = new Date()): number => {
   return followUps.filter((followUp) => isActiveFollowUp(followUp, now)).length;
 };
