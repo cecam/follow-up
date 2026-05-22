@@ -5,5 +5,6 @@ import manifest from "./manifest.json";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "./",
   plugins: [react(), crx({ manifest })],
 });

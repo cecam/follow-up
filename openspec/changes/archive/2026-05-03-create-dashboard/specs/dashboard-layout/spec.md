@@ -11,6 +11,21 @@ The dashboard page SHALL render three distinct sections in vertical order: a hea
 - **WHEN** the contact list exceeds the visible popup area
 - **THEN** the dashboard SHALL enable smooth vertical scrolling on the contact list container while the header and stats sections remain fixed at the top
 
+### Requirement: Dashboard respects runtime and feature boundaries
+The dashboard SHALL keep popup-specific composition in `src/runtimes/popup/` and delegate follow-up business logic, persistence, and reusable follow-up UI to `src/features/follow-ups/` and `src/shared/`.
+
+#### Scenario: Runtime owns popup composition
+- **WHEN** the dashboard page renders
+- **THEN** the popup runtime owns layout composition, navigation callbacks, and popup-specific shell components
+
+#### Scenario: Feature owns follow-up data contract
+- **WHEN** the dashboard needs follow-up data
+- **THEN** it SHALL consume follow-ups through the follow-ups feature boundary instead of reading `chrome.storage.local` directly from runtime UI
+
+#### Scenario: Shared utilities own cross-cutting helpers
+- **WHEN** the dashboard formats dates, exchanges Chrome messages, or reads local storage through infrastructure
+- **THEN** it SHALL use utilities and wrappers from `src/shared/`
+
 ### Requirement: Dashboard header with welcome message
 The header SHALL display a welcome message "Bienvenido de nuevo {username}" where `{username}` is the authenticated user's name. Below the welcome message, the header SHALL display the subtitle "Aquí tienes un vistazo rápido de tus seguimientos".
 

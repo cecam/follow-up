@@ -2,13 +2,15 @@
 
 - [x] 1.1 Instalar `lucide-react` como dependencia
 - [x] 1.2 Actualizar `src/index.css` con los design tokens del bento minimalist system (color tokens, typography scale, shadows, border-radius) definidos en agents.md
-- [x] 1.3 Crear la estructura de directorios: `src/runtimes/popup/pages/`, `src/runtimes/popup/components/`, `src/runtimes/popup/hooks/`
+- [x] 1.3 Crear la estructura de runtime para el popup: `src/runtimes/popup/pages/`, `src/runtimes/popup/components/`, `src/runtimes/popup/hooks/`
+- [x] 1.4 Alinear la documentación del feature con la arquitectura `src/features/follow-ups/` + `src/shared/` definida en `architecture.md`
 
 ## 2. Hook de datos del Dashboard
 
 - [x] 2.1 Crear `src/runtimes/popup/hooks/useDashboard.js` con datos mock de contactos que matcheen el data model de `project.md` (id, name, profileUrl, platform, notes, createdAt, expirationDate)
 - [x] 2.2 Implementar la lógica de cálculo de stats (total activos, por caducar ≤7 días) dentro del hook
 - [x] 2.3 Exportar username mock y estados de loading/error desde el hook
+- [x] 2.4 Documentar que `useDashboard` es un adaptador temporal de runtime y debe delegar el listado real a `src/features/follow-ups/application/list-follow-ups.ts`
 
 ## 3. Componente DashboardHeader
 
@@ -42,6 +44,7 @@
 
 - [x] 7.1 Crear `src/runtimes/popup/components/ContactList.jsx` que renderiza el array de contactos como ContactCards
 - [x] 7.2 Implementar scroll vertical suave con overflow-y auto en el container
+- [x] 7.3 Documentar la migración objetivo de la lista reutilizable hacia `src/features/follow-ups/ui/follow-up-list.tsx`
 
 ## 8. Página Dashboard y ensamblaje
 

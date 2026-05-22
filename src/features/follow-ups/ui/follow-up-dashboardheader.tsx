@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Settings, User, LogOut, Plus } from 'lucide-react';
 
-export const DashboardHeader = ({ username }) => {
+export const FollowUpDashboardHeader = ({ username, onAddFollowUp }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -15,6 +15,7 @@ export const DashboardHeader = ({ username }) => {
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
+
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
@@ -26,28 +27,28 @@ export const DashboardHeader = ({ username }) => {
       </div>
 
       <div className="flex items-center gap-1">
-        <button 
-          style={{ 
+        <button
+          style={{
             color: 'var(--color-accent)',
             padding: '8px',
             borderRadius: '8px',
-            transition: 'background 0.2s'
+            transition: 'background 0.2s',
           }}
           className="hover-bg-subtle"
-          aria-label="Agregar nuevo contacto"
-          onClick={() => console.log('Add new contact')}
+          aria-label="Agregar nuevo follow-up"
+          onClick={onAddFollowUp}
         >
           <Plus size={20} />
         </button>
 
         <div className="relative" ref={dropdownRef}>
-          <button 
+          <button
             onClick={() => setIsOpen(!isOpen)}
-            style={{ 
+            style={{
               color: 'var(--color-text-tertiary)',
               padding: '8px',
               borderRadius: '8px',
-              background: isOpen ? 'var(--color-bg-secondary)' : 'transparent'
+              background: isOpen ? 'var(--color-bg-secondary)' : 'transparent',
             }}
             aria-label="Configuración de la cuenta"
           >
@@ -55,19 +56,19 @@ export const DashboardHeader = ({ username }) => {
           </button>
 
           {isOpen && (
-            <div 
-              className="bento-card" 
-              style={{ 
+            <div
+              className="bento-card"
+              style={{
                 position: 'absolute',
                 right: 0,
                 top: '44px',
                 width: '160px',
                 padding: '8px',
                 zIndex: 100,
-                boxShadow: 'var(--shadow-lg)'
+                boxShadow: 'var(--shadow-lg)',
               }}
             >
-              <button 
+              <button
                 className="flex items-center gap-2 w-full text-body"
                 style={{ padding: '8px', borderRadius: '6px' }}
                 onClick={() => setIsOpen(false)}
@@ -75,7 +76,7 @@ export const DashboardHeader = ({ username }) => {
                 <User size={16} />
                 <span>Editar perfil</span>
               </button>
-              <button 
+              <button
                 className="flex items-center gap-2 w-full text-body"
                 style={{ padding: '8px', borderRadius: '6px', color: 'var(--color-error)' }}
                 onClick={() => setIsOpen(false)}

@@ -1,6 +1,6 @@
 import { Users, Clock } from 'lucide-react';
 
-export const StatsCards = ({ stats }) => {
+export const FollowUpStats = ({ stats }) => {
   return (
     <div className="bento-grid" style={{ paddingTop: 0 }}>
       <div className="bento-card flex flex-col gap-2">
@@ -16,11 +16,11 @@ export const StatsCards = ({ stats }) => {
           <span className="text-caption">Por caducar</span>
           <Clock size={16} style={{ color: stats.expiringSoon > 0 ? 'var(--color-warning)' : 'var(--color-text-tertiary)' }} />
         </div>
-        <span 
-          className="text-heading" 
-          style={{ 
+        <span
+          className="text-heading"
+          style={{
             fontSize: '24px',
-            color: stats.expiringSoon > 0 ? 'var(--color-warning)' : 'var(--color-text-primary)'
+            color: stats.expiringSoon > 0 ? 'var(--color-warning)' : 'var(--color-text-primary)',
           }}
         >
           {stats.expiringSoon}
