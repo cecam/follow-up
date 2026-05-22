@@ -1,6 +1,7 @@
 # Intended architecture for the project
 
 src/
+    main.jsx
     app/
         manifest/
         config/
@@ -16,7 +17,6 @@ src/
             instagram-detector.ts
             x-detector.ts
         popup/
-            main.tsx
             router.tsx
             App.tsx
             pages/
@@ -70,4 +70,4 @@ src/
 
 ## Popup routing
 
-Popup navigation lives in `src/runtimes/popup/` and should use `MemoryRouter`, so routing remains a popup runtime concern instead of leaking into feature modules.
+The popup entrypoint is `src/main.jsx`. Popup navigation lives in `src/runtimes/popup/` and should use `MemoryRouter`, so routing remains a popup runtime concern instead of leaking into feature modules.
