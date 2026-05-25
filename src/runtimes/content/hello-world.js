@@ -110,7 +110,7 @@ function injectFollowUpIntoActionBar(key) {
   return true;
 }
 
-/** Perfil activo según la URL; solo cambia al entrar/salir de /in/... */
+/** Active profile, it works when enter and out from /in/... */
 let trackedProfileKey = "";
 
 let pollTimer = null;
@@ -215,7 +215,7 @@ function installDomObserver() {
   observer.observe(main, { childList: true, subtree: true });
 }
 
-/** LinkedIn a veces no dispara history al cambiar de feed → perfil */
+/** LinkedIn not always triggers history when changing from feed to profile */
 function installUrlWatcher() {
   let lastHref = location.href;
   setInterval(() => {
