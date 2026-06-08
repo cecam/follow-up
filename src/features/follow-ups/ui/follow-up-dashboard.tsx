@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useFollowUp } from '../hooks/use-follow-up';
 import { isExpiringWithinDays } from '../../../shared/utils/date';
@@ -25,13 +25,25 @@ export const FollowUpDashboard = ({
   onEditFollowUp,
   onFollowUpsChange,
 }: FollowUpDashboardProps) => {
-  const { data, isLoading, errors, refetch } = useFollowUp(contactsOverride);
+  const { data, expiredFollowUpsRemoved, isLoading, errors, refetch } = useFollowUp(contactsOverride);
+  const [expiredCleanupAlertNames, setExpiredCleanupAlertNames] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isLoading) {
       onFollowUpsChange(data);
     }
   }, [data, isLoading, onFollowUpsChange]);
+
+  useEffect(() => {
+    if (expiredFollowUpsRemoved.length > 0) {
+      setExpiredCleanupAlertNames(expiredFollowUpsRemoved);
+    }
+  }, [expiredFollowUpsRemoved]);
+
+  const handleFollowUpsChange = useCallback((followUps: FollowUp[]) => {
+    setExpiredCleanupAlertNames([]);
+    onFollowUpsChange(followUps);
+  }, [onFollowUpsChange]);
 
   const stats = useMemo(() => {
     const expiringSoon = data.filter((followUp) => isExpiringWithinDays(followUp.expirationDate, 7)).length;
@@ -43,6 +55,10 @@ export const FollowUpDashboard = ({
   }, [data]);
 
   const activeLimitReached = useMemo(() => hasReachedActiveFollowUpLimit(data), [data]);
+  const expiredFollowUpsRemovedCount = expiredCleanupAlertNames.length;
+  const expiredFollowUpsRemovedMessage = expiredFollowUpsRemovedCount === 1
+    ? 'Se eliminó 1 follow up porque caducó.'
+    : `Se eliminaron ${expiredFollowUpsRemovedCount} follow ups porque caducaron.`;
 
   if (errors) {
     return (
@@ -57,6 +73,19 @@ export const FollowUpDashboard = ({
     <div className="follow-up-dashboard">
       <FollowUpDashboardHeader username={USERNAME} onAddFollowUp={() => onAddFollowUp(data)} />
       <FollowUpStats stats={stats} />
+      {expiredFollowUpsRemovedCount > 0 && (
+        <div className="follow-up-expired-alert" role="alert">
+          <AlertCircle size={16} />
+          <div className="follow-up-expired-alert-content">
+            <span>{expiredFollowUpsRemovedMessage}</span>
+            <ul className="follow-up-expired-alert-list">
+              {expiredCleanupAlertNames.map((followUpName, index) => (
+                <li key={`${followUpName}-${index}`}>{followUpName}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
       {activeLimitReached && (
         <div className="follow-up-limit-alert" role="alert">
           <AlertCircle size={16} />
@@ -67,7 +96,7 @@ export const FollowUpDashboard = ({
         contacts={data}
         loading={isLoading}
         onEditFollowUp={onEditFollowUp}
-        onFollowUpsChange={onFollowUpsChange}
+        onFollowUpsChange={handleFollowUpsChange}
       />
     </div>
   );
