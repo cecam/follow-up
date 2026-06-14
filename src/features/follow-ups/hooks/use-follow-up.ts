@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getAllFollowUps } from '../application/follow-up.service';
+import { consumeExpiredFollowUpsCleanupAlert, getAllFollowUps } from '../application/follow-up.service';
 import type { FollowUp } from '../domain/follow-up';
 
 type UseFollowUpResult = {
@@ -30,8 +30,16 @@ export const useFollowUp = (followUpsOverride?: FollowUp[] | null): UseFollowUpR
 
     try {
       const result = await getAllFollowUps();
+      let cleanupAlertNames: string[] = [];
+
+      try {
+        cleanupAlertNames = await consumeExpiredFollowUpsCleanupAlert();
+      } catch (error) {
+        console.error('Failed to consume expired cleanup alert', error);
+      }
+
       setData(result.contacts);
-      setExpiredFollowUpsRemoved(result.expiredFollowUpsRemoved);
+      setExpiredFollowUpsRemoved(cleanupAlertNames);
     } catch (error) {
       console.error('Failed to load follow-ups', error);
       setErrors(error instanceof Error ? error : new Error('Unable to load follow-ups'));

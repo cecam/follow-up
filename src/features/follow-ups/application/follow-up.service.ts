@@ -8,19 +8,36 @@ import { FOLLOW_UP_ACTIVE_LIMIT_ERROR } from '../domain/follow-up.constants';
 import { fail, ok } from '../../../shared/types/runtime';
 import { normalizeFollowUp } from '../infrastructure/follow-up.adapters';
 import {
+  appendExpiredFollowUpsCleanupAlertRepository,
+  consumeExpiredFollowUpsCleanupAlertRepository,
   createFollowUpRepository,
   deleteFollowUpRepository,
+  getExpiredFollowUpsCleanupMetaRepository,
   getAllFollowUpsRepository,
+  setExpiredFollowUpsCleanupMetaRepository,
   updateStorage,
   updateFollowUpRepository,
 } from '../infrastructure/follow-up.repository';
+import { toLocalDayKey } from '../../../shared/utils/date';
 
 export type GetAllFollowUpsResult = {
+  contacts: FollowUp[];
+};
+
+export type CleanupExpiredFollowUpsResult = {
   contacts: FollowUp[];
   expiredFollowUpsRemoved: string[];
 };
 
-export const getAllFollowUps = async (now: Date = new Date()): Promise<GetAllFollowUpsResult> => {
+export const getAllFollowUps = async (): Promise<GetAllFollowUpsResult> => {
+  const followUps = (await getAllFollowUpsRepository()).map(normalizeFollowUp);
+
+  return {
+    contacts: followUps,
+  };
+};
+
+export const cleanupExpiredFollowUps = async (now: Date = new Date()): Promise<CleanupExpiredFollowUpsResult> => {
   const followUps = (await getAllFollowUpsRepository()).map(normalizeFollowUp);
   const expiredFollowUps = followUps.filter((followUp) => isExpiredFollowUp(followUp, now));
 
@@ -38,6 +55,33 @@ export const getAllFollowUps = async (now: Date = new Date()): Promise<GetAllFol
     contacts,
     expiredFollowUpsRemoved: expiredFollowUps.map((followUp) => followUp.name),
   };
+};
+
+export const consumeExpiredFollowUpsCleanupAlert = async (): Promise<string[]> => {
+  const alert = await consumeExpiredFollowUpsCleanupAlertRepository();
+  return alert?.names ?? [];
+};
+
+export const appendExpiredFollowUpsCleanupAlert = async (
+  names: string[],
+  generatedAt: string = new Date().toISOString(),
+): Promise<void> => {
+  if (names.length === 0) return;
+  await appendExpiredFollowUpsCleanupAlertRepository(names, generatedAt);
+};
+
+export const hasCompletedExpiredFollowUpsCleanupForDay = async (dayKey: string): Promise<boolean> => {
+  const meta = await getExpiredFollowUpsCleanupMetaRepository();
+  return meta?.lastProcessedDay === dayKey;
+};
+
+export const markExpiredFollowUpsCleanupCompleted = async (
+  now: Date = new Date(),
+): Promise<void> => {
+  await setExpiredFollowUpsCleanupMetaRepository({
+    lastProcessedDay: toLocalDayKey(now),
+    lastProcessedAt: now.toISOString(),
+  });
 };
 
 export const createFollowUp = async (input: FollowUpInput) => {

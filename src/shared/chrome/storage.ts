@@ -25,6 +25,15 @@ const setFallbackStorageValue = (key: string, value: StorageValue): void => {
   memoryStorage.set(key, value);
 };
 
+const removeFallbackStorageValue = (key: string): void => {
+  if (hasBrowserLocalStorage()) {
+    globalThis.localStorage.removeItem(key);
+    return;
+  }
+
+  memoryStorage.delete(key);
+};
+
 export const getLocalStorage = <T extends StorageValues = StorageValues>(keys: StorageKeys): Promise<Partial<T>> => {
   if (!hasChromeStorage()) {
     const keyList = Array.isArray(keys) ? keys : [keys];
@@ -56,6 +65,25 @@ export const setLocalStorage = <T extends StorageValues = StorageValues>(values:
 
   return new Promise((resolve, reject) => {
     globalThis.chrome.storage.local.set(values, () => {
+      const runtimeError = globalThis.chrome.runtime?.lastError;
+      if (runtimeError) {
+        reject(new Error(runtimeError.message));
+        return;
+      }
+      resolve();
+    });
+  });
+};
+
+export const removeLocalStorage = (keys: StorageKeys): Promise<void> => {
+  if (!hasChromeStorage()) {
+    const keyList = Array.isArray(keys) ? keys : [keys];
+    keyList.forEach((key) => removeFallbackStorageValue(key));
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    globalThis.chrome.storage.local.remove(keys, () => {
       const runtimeError = globalThis.chrome.runtime?.lastError;
       if (runtimeError) {
         reject(new Error(runtimeError.message));

@@ -36,3 +36,10 @@ export const fromDateInputValue = (dateValue?: string): string => {
   if (!dateValue) return '';
   return new Date(`${dateValue}T23:59:59`).toISOString();
 };
+
+export const toLocalDayKey = (date: Date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
