@@ -11,7 +11,10 @@
   "content_scripts": [
     {
       "matches": ["https://www.linkedin.com/*"],
-      "js": ["src/runtimes/content/hello-world.js"],
+      "js": [
+        "src/runtimes/content/hello-world.js",
+        "src/runtimes/content/linkedin-feed-injector.js"
+      ],
       "run_at": "document_idle"
     }
   ]
