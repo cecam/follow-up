@@ -1,10 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import App from './runtimes/popup/App';
+import { PopupRouter } from './runtimes/popup/router';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <PopupRouter />
   </StrictMode>,
 );

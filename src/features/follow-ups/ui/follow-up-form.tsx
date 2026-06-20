@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ArrowLeft, AlertCircle, Save } from 'lucide-react';
 import { useCreateFollowUp } from '../hooks/use-create-follow-up';
 import { useUpdateFollowUp } from '../hooks/use-update-follow-up';
@@ -61,6 +61,11 @@ export const FollowUpForm = ({ followUp, followUps, onBack, onSaveSuccess }: Fol
   const isSubmitting = isSaving || isUpdating;
   const activeLimitReached = !isEditMode && hasReachedActiveFollowUpLimit(followUps ?? []);
   const createButtonDisabled = isSubmitting || activeLimitReached;
+
+  useEffect(() => {
+    setValues(createInitialValues(followUp));
+    setErrors({});
+  }, [followUp]);
 
   const automaticExpirationDate = useMemo(() => {
     return toDateInputValue(getExpirationDate(values.createdAt));

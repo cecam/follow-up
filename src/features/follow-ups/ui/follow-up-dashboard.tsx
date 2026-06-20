@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
+import type { NavigateFunction } from 'react-router-dom';
 import { useFollowUp } from '../hooks/use-follow-up';
 import { isExpiringWithinDays } from '../../../shared/utils/date';
 import type { FollowUp } from '../domain/follow-up';
@@ -12,27 +13,17 @@ import './styles/follow-up-dashboard.css';
 
 export type FollowUpDashboardProps = {
   contactsOverride?: FollowUp[] | null;
-  onAddFollowUp: (followUps?: FollowUp[]) => void;
-  onEditFollowUp: (followUp: FollowUp) => void;
-  onFollowUpsChange: (followUps: FollowUp[]) => void;
+  navigate: NavigateFunction;
 };
 
 const USERNAME = 'David';
 
 export const FollowUpDashboard = ({
   contactsOverride,
-  onAddFollowUp,
-  onEditFollowUp,
-  onFollowUpsChange,
+  navigate,
 }: FollowUpDashboardProps) => {
   const { data, expiredFollowUpsRemoved, isLoading, errors, refetch } = useFollowUp(contactsOverride);
   const [expiredCleanupAlertNames, setExpiredCleanupAlertNames] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      onFollowUpsChange(data);
-    }
-  }, [data, isLoading, onFollowUpsChange]);
 
   useEffect(() => {
     if (expiredFollowUpsRemoved.length > 0) {
@@ -40,10 +31,17 @@ export const FollowUpDashboard = ({
     }
   }, [expiredFollowUpsRemoved]);
 
+  const handleAddFollowUp = useCallback(() => {
+    navigate('/follow-ups/new');
+  }, [navigate]);
+
+  const handleEditFollowUp = useCallback((followUp: FollowUp) => {
+    navigate(`/follow-ups/${followUp.id}/edit`);
+  }, [navigate]);
+
   const handleFollowUpsChange = useCallback((followUps: FollowUp[]) => {
     setExpiredCleanupAlertNames([]);
-    onFollowUpsChange(followUps);
-  }, [onFollowUpsChange]);
+  }, []);
 
   const stats = useMemo(() => {
     const expiringSoon = data.filter((followUp) => isExpiringWithinDays(followUp.expirationDate, 7)).length;
@@ -71,7 +69,7 @@ export const FollowUpDashboard = ({
 
   return (
     <div className="follow-up-dashboard">
-      <FollowUpDashboardHeader username={USERNAME} onAddFollowUp={() => onAddFollowUp(data)} />
+      <FollowUpDashboardHeader username={USERNAME} onAddFollowUp={handleAddFollowUp} />
       <FollowUpStats stats={stats} />
       {expiredFollowUpsRemovedCount > 0 && (
         <div className="follow-up-expired-alert" role="alert">
@@ -92,10 +90,10 @@ export const FollowUpDashboard = ({
           <span>{FOLLOW_UP_ACTIVE_LIMIT_MESSAGE}</span>
         </div>
       )}
-      <FollowUpList
+        <FollowUpList
         contacts={data}
         loading={isLoading}
-        onEditFollowUp={onEditFollowUp}
+        onEditFollowUp={handleEditFollowUp}
         onFollowUpsChange={handleFollowUpsChange}
       />
     </div>
