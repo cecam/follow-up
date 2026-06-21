@@ -20,18 +20,19 @@ function buildFeedFollowUpButton() {
   btn.setAttribute("aria-label", "Add follow-up");
 
   Object.assign(btn.style, {
+    marginTop: "8px",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "4px",
     background: "transparent",
-    border: "1px solid rgba(0,0,0,0.6)",
+    border: "none",
     borderRadius: "1.6rem",
     padding: "5px 16px",
     fontSize: "14px",
     fontWeight: "600",
     lineHeight: "1.5",
-    color: "rgba(0,0,0,0.6)",
+    color: "rgb(10, 102, 194)",
     cursor: "pointer",
     fontFamily: "inherit",
     whiteSpace: "nowrap",
@@ -39,13 +40,13 @@ function buildFeedFollowUpButton() {
 
   btn.addEventListener("mouseenter", () => {
     btn.style.background = "rgba(0,0,0,0.08)";
-    btn.style.borderColor = "transparent";
+    btn.style.borderColor = "none";
     btn.style.color = "rgba(0,0,0,0.9)";
   });
   btn.addEventListener("mouseleave", () => {
     btn.style.background = "transparent";
-    btn.style.borderColor = "rgba(0,0,0,0.6)";
-    btn.style.color = "rgba(0,0,0,0.6)";
+    btn.style.borderColor = "none";
+    btn.style.color = "rgb(10, 102, 194)";
   });
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
