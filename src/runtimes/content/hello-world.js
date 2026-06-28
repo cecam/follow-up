@@ -48,6 +48,33 @@ function findMessagingActionCell() {
   return { cell };
 }
 
+function extractProfileData() {
+  const nameEl =
+    document.querySelector('[componentkey^="ProfileVerificationTriggerRef-"] h2') ||
+    document.querySelector('main h2') ||
+    document.querySelector('h2');
+
+  let name = nameEl ? nameEl.textContent.trim() : '';
+
+  if (!name) {
+    const match = window.location.pathname.match(/^\/in\/([^/]+)/i);
+    if (match) {
+      name = match[1]
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+  }
+
+  const subtitleEl = document.querySelector('.text-body-medium.break-words');
+  const notes = subtitleEl ? subtitleEl.textContent.trim() : '';
+
+  // Strip query params and hash so we store a clean canonical profile URL
+  const profileUrl = `${window.location.origin}${window.location.pathname}`;
+
+  return { name, notes, profileUrl };
+}
+
 function buildFollowUpButton(key) {
   const btn = document.createElement("button");
   btn.type = "button";
@@ -87,6 +114,47 @@ function buildFollowUpButton(key) {
 
   spanOuter.textContent = "Add follow-up";
   btn.appendChild(spanOuter);
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const data = extractProfileData();
+    const originalText = spanOuter.textContent;
+    spanOuter.textContent = "Adding...";
+
+    try {
+      chrome.runtime.sendMessage(
+        {
+          action: "CREATE_FOLLOW_UP_FROM_LINKEDIN",
+          payload: data,
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            // Common cause: service worker was sleeping. Check the message below.
+            console.error("[follow-up] Runtime error:", chrome.runtime.lastError.message);
+            spanOuter.textContent = "✗ Error";
+          } else if (response && response.ok) {
+            spanOuter.textContent = "✓ Added";
+          } else {
+            spanOuter.textContent = "✗ Error";
+            console.error("[follow-up] Server error:", response?.error, "| Full response:", response);
+          }
+
+          setTimeout(() => {
+            spanOuter.textContent = originalText;
+          }, 2000);
+        }
+      );
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      spanOuter.textContent = "✗ Error";
+      setTimeout(() => {
+        spanOuter.textContent = originalText;
+      }, 2000);
+    }
+  });
+
   return btn;
 }
 
