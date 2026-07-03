@@ -1,5 +1,6 @@
 const BTN_ATTR = "data-followup-extension-btn";
 const SLOT_ATTR = "data-followup-extension-slot";
+const OPEN_FOLLOW_UP_FORM_ACTION = "OPEN_FOLLOW_UP_FORM_FROM_LINKEDIN_PROFILE";
 
 function isLinkedInPersonProfile() {
   if (location.hostname !== "www.linkedin.com") return false;
@@ -66,13 +67,10 @@ function extractProfileData() {
     }
   }
 
-  const subtitleEl = document.querySelector('.text-body-medium.break-words');
-  const notes = subtitleEl ? subtitleEl.textContent.trim() : '';
-
-  // Strip query params and hash so we store a clean canonical profile URL
+  // Build the canonical profile URL without query parameters or fragments.
   const profileUrl = `${window.location.origin}${window.location.pathname}`;
 
-  return { name, notes, profileUrl };
+  return { name, profileUrl };
 }
 
 function buildFollowUpButton(key) {
@@ -121,37 +119,40 @@ function buildFollowUpButton(key) {
 
     const data = extractProfileData();
     const originalText = spanOuter.textContent;
-    spanOuter.textContent = "Adding...";
+    spanOuter.textContent = "Opening...";
+    btn.disabled = true;
+
+    const restoreButton = () => {
+      spanOuter.textContent = originalText;
+      btn.disabled = false;
+    };
+
+    const showError = () => {
+      spanOuter.textContent = "✗ Error";
+      setTimeout(restoreButton, 2000);
+    };
 
     try {
       chrome.runtime.sendMessage(
         {
-          action: "CREATE_FOLLOW_UP_FROM_LINKEDIN",
+          action: OPEN_FOLLOW_UP_FORM_ACTION,
           payload: data,
         },
         (response) => {
           if (chrome.runtime.lastError) {
-            // Common cause: service worker was sleeping. Check the message below.
             console.error("[follow-up] Runtime error:", chrome.runtime.lastError.message);
-            spanOuter.textContent = "✗ Error";
+            showError();
           } else if (response && response.ok) {
-            spanOuter.textContent = "✓ Added";
+            restoreButton();
           } else {
-            spanOuter.textContent = "✗ Error";
             console.error("[follow-up] Server error:", response?.error, "| Full response:", response);
+            showError();
           }
-
-          setTimeout(() => {
-            spanOuter.textContent = originalText;
-          }, 2000);
         }
       );
     } catch (err) {
       console.error("Failed to send message:", err);
-      spanOuter.textContent = "✗ Error";
-      setTimeout(() => {
-        spanOuter.textContent = originalText;
-      }, 2000);
+      showError();
     }
   });
 
