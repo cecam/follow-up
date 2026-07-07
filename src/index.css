@@ -4,6 +4,19 @@
   box-sizing: border-box;
 }
 
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Chrome extension popups need an explicit min-width and min-height if the root container uses 100% height */
+body {
+  min-width: 400px;
+  min-height: 500px;
+}
+
 :root {
   /* Surfaces */
   --color-bg-primary: #FAFAFA;

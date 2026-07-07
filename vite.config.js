@@ -7,4 +7,13 @@ import manifest from "./manifest.json";
 export default defineConfig({
   base: "./",
   plugins: [react(), crx({ manifest })],
+  server: {
+    cors: {
+      origin: "*",
+      methods: ["GET", "HEAD", "OPTIONS"],
+    },
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+    },
+  },
 });

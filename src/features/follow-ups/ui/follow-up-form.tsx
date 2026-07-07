@@ -22,28 +22,42 @@ type FollowUpFormValues = {
   createdAt: string;
 };
 
+export type FollowUpFormInitialValues = Pick<FollowUpFormValues, 'name' | 'profileUrl'>;
+
 export type FollowUpFormProps = {
   followUp?: FollowUp | null;
   followUps?: FollowUp[] | null;
+  initialValues?: FollowUpFormInitialValues;
   onBack: () => void;
   onSaveSuccess: (followUps: FollowUp[]) => void;
 };
 
-const createInitialValues = (followUp?: FollowUp | null): FollowUpFormValues => {
+const createInitialValues = (
+  followUp?: FollowUp | null,
+  initialValues?: FollowUpFormInitialValues,
+): FollowUpFormValues => {
   const now = new Date();
   const createdAt = followUp?.createdAt ?? now.toISOString();
 
   return {
-    name: followUp?.name ?? '',
-    profileUrl: followUp?.profileUrl ?? '',
+    name: followUp?.name ?? initialValues?.name ?? '',
+    profileUrl: followUp?.profileUrl ?? initialValues?.profileUrl ?? '',
     notes: followUp?.notes ?? '',
     status: followUp?.status ?? FOLLOW_UP_STATUSES.PENDING,
     createdAt,
   };
 };
 
-export const FollowUpForm = ({ followUp, followUps, onBack, onSaveSuccess }: FollowUpFormProps) => {
-  const [values, setValues] = useState<FollowUpFormValues>(() => createInitialValues(followUp));
+export const FollowUpForm = ({
+  followUp,
+  followUps,
+  initialValues,
+  onBack,
+  onSaveSuccess,
+}: FollowUpFormProps) => {
+  const [values, setValues] = useState<FollowUpFormValues>(() =>
+    createInitialValues(followUp, initialValues),
+  );
   const [errors, setErrors] = useState<FollowUpValidationErrors>({});
   const {
     createFollowUp,
@@ -63,9 +77,9 @@ export const FollowUpForm = ({ followUp, followUps, onBack, onSaveSuccess }: Fol
   const createButtonDisabled = isSubmitting || activeLimitReached;
 
   useEffect(() => {
-    setValues(createInitialValues(followUp));
+    setValues(createInitialValues(followUp, initialValues));
     setErrors({});
-  }, [followUp]);
+  }, [followUp, initialValues?.name, initialValues?.profileUrl]);
 
   const automaticExpirationDate = useMemo(() => {
     return toDateInputValue(getExpirationDate(values.createdAt));

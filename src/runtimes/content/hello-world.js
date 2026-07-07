@@ -1,5 +1,6 @@
 const BTN_ATTR = "data-followup-extension-btn";
 const SLOT_ATTR = "data-followup-extension-slot";
+const OPEN_FOLLOW_UP_FORM_ACTION = "OPEN_FOLLOW_UP_FORM_FROM_LINKEDIN_PROFILE";
 
 function isLinkedInPersonProfile() {
   if (location.hostname !== "www.linkedin.com") return false;
@@ -48,6 +49,30 @@ function findMessagingActionCell() {
   return { cell };
 }
 
+function extractProfileData() {
+  const nameEl =
+    document.querySelector('[componentkey^="ProfileVerificationTriggerRef-"] h2') ||
+    document.querySelector('main h2') ||
+    document.querySelector('h2');
+
+  let name = nameEl ? nameEl.textContent.trim() : '';
+
+  if (!name) {
+    const match = window.location.pathname.match(/^\/in\/([^/]+)/i);
+    if (match) {
+      name = match[1]
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+  }
+
+  // Build the canonical profile URL without query parameters or fragments.
+  const profileUrl = `${window.location.origin}${window.location.pathname}`;
+
+  return { name, profileUrl };
+}
+
 function buildFollowUpButton(key) {
   const btn = document.createElement("button");
   btn.type = "button";
@@ -87,6 +112,50 @@ function buildFollowUpButton(key) {
 
   spanOuter.textContent = "Add follow-up";
   btn.appendChild(spanOuter);
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const data = extractProfileData();
+    const originalText = spanOuter.textContent;
+    spanOuter.textContent = "Opening...";
+    btn.disabled = true;
+
+    const restoreButton = () => {
+      spanOuter.textContent = originalText;
+      btn.disabled = false;
+    };
+
+    const showError = () => {
+      spanOuter.textContent = "✗ Error";
+      setTimeout(restoreButton, 2000);
+    };
+
+    try {
+      chrome.runtime.sendMessage(
+        {
+          action: OPEN_FOLLOW_UP_FORM_ACTION,
+          payload: data,
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.error("[follow-up] Runtime error:", chrome.runtime.lastError.message);
+            showError();
+          } else if (response && response.ok) {
+            restoreButton();
+          } else {
+            console.error("[follow-up] Server error:", response?.error, "| Full response:", response);
+            showError();
+          }
+        }
+      );
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      showError();
+    }
+  });
+
   return btn;
 }
 
