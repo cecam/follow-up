@@ -1,5 +1,8 @@
+/* global chrome */
+
 const FEED_SLOT_ATTR = "data-followup-feed-slot";
 const FEED_PROCESSED_ATTR = "data-followup-feed-processed";
+const OPEN_FOLLOW_UP_FORM_ACTION = "OPEN_FOLLOW_UP_FORM_FROM_LINKEDIN_PROFILE";
 
 function isLinkedInFeed() {
   return (
@@ -9,12 +12,90 @@ function isLinkedInFeed() {
 }
 
 function findUnprocessedFollowButtons() {
-  return [
+  const buttons = [
+    ...document.querySelectorAll('button[aria-label^="Seguir a"]'),
     ...document.querySelectorAll("button:has(svg[id='add-small'])"),
-  ].filter((btn) => !btn.hasAttribute(FEED_PROCESSED_ATTR));
+  ];
+
+  return [...new Set(buttons)].filter((btn) => !btn.hasAttribute(FEED_PROCESSED_ATTR));
 }
 
-function buildFeedFollowUpButton() {
+function getFollowButtonName(seguirBtn) {
+  const ariaLabel = seguirBtn.getAttribute("aria-label")?.trim() ?? "";
+  const spanishMatch = ariaLabel.match(/^Seguir\s+a\s+(.+)$/i);
+  const englishMatch = ariaLabel.match(/^Follow\s+(.+)$/i);
+  return (spanishMatch?.[1] ?? englishMatch?.[1] ?? "").trim();
+}
+
+function getProfilePathname(url) {
+  const pathname = url.pathname.replace(/\/+$/, "");
+  const match = pathname.match(/^(\/in\/[^/]+)/i);
+  return match ? match[1] : "";
+}
+
+function normalizeLinkedInProfileUrl(href) {
+  try {
+    const url = new URL(href, window.location.origin);
+    const profilePathname = getProfilePathname(url);
+
+    if (url.hostname !== "www.linkedin.com" || !profilePathname) {
+      return "";
+    }
+
+    return `${url.origin}${profilePathname}`;
+  } catch {
+    return "";
+  }
+}
+
+function cleanAuthorName(value) {
+  return value
+    .replace(/\s+/g, " ")
+    .replace(/\s+perfil\b.*$/i, "")
+    .replace(/\s+profile\b.*$/i, "")
+    .trim();
+}
+
+function getAuthorNameFromProfileLink(link) {
+  const labelledElement = link.querySelector("[aria-label]");
+  const candidates = [
+    link.textContent,
+    link.getAttribute("aria-label"),
+    labelledElement?.getAttribute("aria-label"),
+  ];
+
+  for (const candidate of candidates) {
+    const name = cleanAuthorName(candidate ?? "");
+    if (name) return name;
+  }
+
+  return "";
+}
+
+function getPostRoot(seguirBtn, fallbackRoot) {
+  return seguirBtn.closest('[role="listitem"]') ?? fallbackRoot ?? seguirBtn;
+}
+
+function extractFeedProfileData(seguirBtn, fallbackRoot) {
+  const postRoot = getPostRoot(seguirBtn, fallbackRoot);
+  const profileLink = [...postRoot.querySelectorAll('a[href*="/in/"]')]
+    .find((link) => normalizeLinkedInProfileUrl(link.href));
+
+  if (!profileLink) {
+    return null;
+  }
+
+  const profileUrl = normalizeLinkedInProfileUrl(profileLink.href);
+  const name = getFollowButtonName(seguirBtn) || getAuthorNameFromProfileLink(profileLink);
+
+  if (!name || !profileUrl) {
+    return null;
+  }
+
+  return { name, profileUrl };
+}
+
+function buildFeedFollowUpButton(seguirBtn, fallbackRoot) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.setAttribute("aria-label", "Add follow-up");
@@ -70,6 +151,59 @@ function buildFeedFollowUpButton() {
 
   btn.appendChild(svg);
   btn.appendChild(label);
+
+  btn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const data = extractFeedProfileData(seguirBtn, fallbackRoot);
+    const originalText = label.textContent;
+
+    const restoreButton = () => {
+      label.textContent = originalText;
+      btn.disabled = false;
+      btn.style.opacity = "1";
+    };
+
+    const showError = () => {
+      label.textContent = "Error";
+      btn.style.opacity = "1";
+      setTimeout(restoreButton, 2000);
+    };
+
+    if (!data) {
+      showError();
+      return;
+    }
+
+    label.textContent = "Opening...";
+    btn.disabled = true;
+    btn.style.opacity = "0.6";
+
+    try {
+      chrome.runtime.sendMessage(
+        {
+          action: OPEN_FOLLOW_UP_FORM_ACTION,
+          payload: data,
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.error("[follow-up] Runtime error:", chrome.runtime.lastError.message);
+            showError();
+          } else if (response && response.ok) {
+            restoreButton();
+          } else {
+            console.error("[follow-up] Server error:", response?.error, "| Full response:", response);
+            showError();
+          }
+        },
+      );
+    } catch (error) {
+      console.error("[follow-up] Failed to send message:", error);
+      showError();
+    }
+  });
+
   return btn;
 }
 
@@ -101,7 +235,7 @@ function injectIntoCard(seguirBtn) {
   slot.setAttribute(FEED_SLOT_ATTR, "1");
   slot.setAttribute("data-display-contents", "true");
   slot.className = outerWrapper.className;
-  slot.appendChild(buildFeedFollowUpButton());
+  slot.appendChild(buildFeedFollowUpButton(seguirBtn, outerWrapper));
 
   outerWrapper.insertAdjacentElement("afterend", slot);
   seguirBtn.setAttribute(FEED_PROCESSED_ATTR, "1");
