@@ -22,7 +22,7 @@ export const FollowUpDashboard = ({
   contactsOverride,
   navigate,
 }: FollowUpDashboardProps) => {
-  const { data, expiredFollowUpsRemoved, isLoading, errors, refetch } = useFollowUp(contactsOverride);
+  const { data, expiredFollowUpsRemoved, isLoading, errors, refetch, setFollowUps } = useFollowUp(contactsOverride);
   const [expiredCleanupAlertNames, setExpiredCleanupAlertNames] = useState<string[]>([]);
 
   useEffect(() => {
@@ -40,8 +40,9 @@ export const FollowUpDashboard = ({
   }, [navigate]);
 
   const handleFollowUpsChange = useCallback((followUps: FollowUp[]) => {
+    setFollowUps(followUps);
     setExpiredCleanupAlertNames([]);
-  }, []);
+  }, [setFollowUps]);
 
   const stats = useMemo(() => {
     const expiringSoon = data.filter((followUp) => isExpiringWithinDays(followUp.expirationDate, 7)).length;

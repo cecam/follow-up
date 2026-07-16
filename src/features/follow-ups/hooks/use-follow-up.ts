@@ -5,6 +5,7 @@ import type { FollowUp } from '../domain/follow-up';
 type UseFollowUpResult = {
   data: FollowUp[];
   expiredFollowUpsRemoved: string[];
+  setFollowUps: (followUps: FollowUp[]) => void;
   refetch: () => Promise<void>;
   isLoading: boolean;
   errors: Error | null;
@@ -44,9 +45,14 @@ export const useFollowUp = (followUpsOverride?: FollowUp[] | null): UseFollowUpR
     void getFollowUps();
   }, [getFollowUps]);
 
+  const setFollowUps = useCallback((followUps: FollowUp[]) => {
+    setData(followUps);
+  }, []);
+
   return {
     data,
     expiredFollowUpsRemoved,
+    setFollowUps,
     refetch: getFollowUps,
     isLoading,
     errors,
