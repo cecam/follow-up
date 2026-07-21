@@ -1,3 +1,5 @@
+/* global chrome */
+
 const BTN_ATTR = "data-followup-extension-btn";
 const SLOT_ATTR = "data-followup-extension-slot";
 const OPEN_FOLLOW_UP_FORM_ACTION = "OPEN_FOLLOW_UP_FORM_FROM_LINKEDIN_PROFILE";
